@@ -20,7 +20,7 @@ moneyPitches = function(playerid){
     # filter for 2018
     dplyr::filter(Season == 2018) %>%
     # Extract a few of the columns
-    select(Season, Pitch, Pitches, `O-Swing%`, `Zone%`, `SwStr%`) %>%
+    select(Season, Pitch, Pitches, `O-Swing%`, `Zone%`, `SwStr%`, pVAL) %>%
     # remove the `%` symbols and makes the values numeric
     mutate(`O-Swing%` = as.numeric(gsub("%", "", `O-Swing%`)),
            `Zone%` = as.numeric(gsub("%", "", `Zone%`)),
@@ -33,4 +33,13 @@ moneyPitches = function(playerid){
 
 kershaw = moneyPitches(playerid = 2036)
 
+# See output from function
 kershaw
+
+
+# Find out what working directory (save location) you are currently in
+getwd()
+
+# Save the file to a csv in your current working directory
+write.csv(kershaw, file = "Kershaw Money Pitches 2018.csv", row.names = F)
+
