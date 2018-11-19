@@ -1,12 +1,6 @@
-
-# IMake sure you have the pacman library downloaded and installed
-require(pacman)
-
-# Once pacman is installed, you can use the p_load functions with any other library and R will download
-# install and load in the library into your current session. If the libraries are already downloaded, 
-# then it will simply install them. Similar to running: require(dplyr)
-p_load(rvest)
-p_load(dplyr)
+# Need the rvest and dplyr libraries installed
+require(rvest)
+require(dplyr)
 
 moneyPitches = function(playerid){
   # This is the base url for the Fangraphs pitching data 
