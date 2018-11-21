@@ -88,7 +88,7 @@ for(i in 1:nrow(df)){
   
   # Extract pitch info and add in player name and ID for filtering
   player1 = moneyPitches(id)
-  player1$Name = paste(x$first_name[i], x$last_name[i])
+  player1$Name = paste(df$first_name[i], df$last_name[i])
   player1$ID = id
   
   data = rbind(data, player1)
