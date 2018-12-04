@@ -18,14 +18,14 @@ data = scrape_statcast_savant("2018-08-01", "2018-08-31")
 
 
 data %>%
-  # remove foul balls and pitches with no launch speed (balls & strikes)
-  filter(description != "foul" & !is.na(launch_speed)) %>%
-  # group by each player and them find the mean EV and number of batted balls
+  # filter the balls that were put into play
+  filter(type == "X") %>%
+  # group by each player and them find the mean EV and # of BBE
   group_by(player_name) %>%
-  summarize(EV = mean(launch_speed),
-            N = n()) %>%
+  summarize(BBE = n(),
+            EV = mean(launch_speed)) %>%
   # remove all players with less than 20 recorded batted ball events in August
-  filter(N >= 20) %>%
+  filter(BBE >= 20) %>%
   # look at the top 10
   arrange(desc(EV)) %>%
   print(n = 10)
@@ -39,21 +39,20 @@ data %>%
 # Pop up: >50 degrees
 
 data %>%
-  # remove foul balls and pitches with no launch speed (balls & strikes)
-  filter(description != "foul" & !is.na(launch_speed)) %>%
+  # filter the balls that were put into play
+  filter(type == "X") %>%
   mutate(Type = ifelse(launch_angle < 10, "Ground Ball", NA)) %>%
   mutate(Type = ifelse(launch_angle >= 10 & launch_angle < 25, "Line Drive", Type)) %>%
-  mutate(Type = ifelse(launch_angle > 25 & launch_angle <= 50, "Fly Ball", Type)) %>%
-  mutate(Type = ifelse(launch_angle > 50, "Pop up", Type)) %>%
+  mutate(Type = ifelse(launch_angle >= 25 & launch_angle < 50, "Fly Ball", Type)) %>%
+  mutate(Type = ifelse(launch_angle >= 50, "Pop up", Type)) %>%
   filter(Type == "Line Drive") %>%
   group_by(player_name) %>%
-  summarize(`Line Drive EV (mph)` = round(mean(launch_speed), 1),
+  summarize(`LD EV` = round(mean(launch_speed), 1),
             Number = n()) %>%
-  arrange(desc(`Line Drive EV (mph)`)) %>%
+  arrange(desc(`LD EV`)) %>%
   filter(Number >= 5) %>%
   slice(1:10) %>%
   as.data.frame()
-
 
 
 #####
@@ -62,10 +61,9 @@ data %>%
 #
 #####
 
-
 data %>%
-  # remove foul balls and pitches with no launch speed (balls & strikes)
-  filter(description != "foul" & !is.na(launch_speed)) %>%
+  # filter the balls that were put into play
+  filter(type == "X") %>%
   # group by each player and them find the mean EV and number of batted balls
   group_by(player_name) %>%
   top_n(n = 10, wt = launch_speed) %>%
@@ -75,7 +73,9 @@ data %>%
   filter(N == 10) %>%
   # look at the top 10
   arrange(desc(EV)) %>%
-  slice(1:10)
+  slice(1:10) %>%
+  mutate(EV = round(EV, 1)) %>%
+  as.data.frame()
 
 
 
@@ -86,8 +86,8 @@ data %>%
 #####
 
 data %>%
-  # remove foul balls and pitches with no launch speed (balls & strikes)
-  filter(description != "foul" & !is.na(launch_speed)) %>%
+  # filter the balls that were put into play
+  filter(type == "X") %>%
   # group by each player and them find the mean EV and number of batted balls
   group_by(player_name) %>%
   top_n(n = -10, wt = launch_speed) %>%
@@ -96,4 +96,7 @@ data %>%
   filter(N == 10) %>%
   # look at the top 10
   arrange(EV) %>%
-  slice(1:10)
+  slice(1:10) %>%
+  mutate(EV = round(EV, 1)) %>%
+  as.data.frame()
+
