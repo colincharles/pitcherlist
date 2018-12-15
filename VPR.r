@@ -90,7 +90,7 @@ VPR = function(fg_id){
   return(dat)
 }
 
-data.VPR = map_df(head(unique(df$fg_id), n = 3), function(i){
+data.VPR = map_df(unique(df$fg_id), function(i){
   VPR(i)
 })
 
