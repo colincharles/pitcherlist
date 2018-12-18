@@ -25,12 +25,11 @@ df = read_html(url) %>%
 
 colnames(df) = df[1,]
 
+# include all pichers (no limit on GS)
 df = df %>%
   slice(-1) %>%
   mutate(first_name = sapply(strsplit(Name, split=' ', fixed=TRUE), function(x) (x[1])),
-         last_name = sapply(strsplit(Name, split=' ', fixed=TRUE), function(x) (x[2]))) %>%
-  mutate(GS = as.numeric(GS)) %>%
-  filter(GS > 0)
+         last_name = sapply(strsplit(Name, split=' ', fixed=TRUE), function(x) (x[2])))
 
 # Combine the pitch leaderboards with the Fangraphs ID for scraping game logs
 df = left_join(df, master[,c("fg_name","fg_id")], by = c("Name" = "fg_name")) %>%
@@ -38,7 +37,7 @@ df = left_join(df, master[,c("fg_name","fg_id")], by = c("Name" = "fg_name")) %>
 
 
 
-# create a function to calculate VRP & kVPR
+# create a function to calculate VRP & kVPR. Will 
 VPR = function(fg_id){
   dat = NULL
   data = pitcher_game_logs_fg(playerid = fg_id, year = 2018) %>%
