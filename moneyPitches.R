@@ -6,6 +6,7 @@
 require(rvest)
 require(dplyr)
 require(baseballr)
+require(purrr)
 
 moneyPitches = function(playerid){
   # This is the base url for the Fangraphs pitching data 
@@ -72,7 +73,7 @@ df = df %>%
   mutate(first_name = sapply(strsplit(Name, split=' ', fixed=TRUE), function(x) (x[1])),
          last_name = sapply(strsplit(Name, split=' ', fixed=TRUE), function(x) (x[2]))) %>%
   # Combine the pitch leaderboards with the Fangraphs ID for scraping game logs
-  left_join(df, master[,c("fg_name","fg_id")], by = c("Name" = "fg_name")) %>%
+  left_join(., master[,c("fg_name","fg_id")], by = c("Name" = "fg_name")) %>%
   mutate(fg_id = as.numeric(as.character(fg_id)))
 
                              
@@ -83,7 +84,7 @@ data = map_df(unique(df$fg_id), function(i){
 data = right_join(master[,c("fg_name", "fg_id")], data) %>%
   rename(Name = fg_name) %>%
   select(-fg_id) %>%
-  arrange(desc(VPR))
+  arrange(desc(pVAL))
   
 
 data %>%
