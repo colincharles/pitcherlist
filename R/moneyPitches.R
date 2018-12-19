@@ -32,6 +32,8 @@ moneyPitches = function(playerid){
            `Zone%` = as.numeric(gsub("%", "", `Zone%`)),
            `SwStr%` = as.numeric(gsub("%", "", `SwStr%`)))
   
+  pitchTable$fg_id = playerid
+  
   return(pitchTable)
 }
 
@@ -83,8 +85,7 @@ data = map_df(unique(df$fg_id), function(i){
                                  
 data = right_join(master[,c("fg_name", "fg_id")], data) %>%
   rename(Name = fg_name) %>%
-  select(-fg_id) %>%
-  arrange(desc(pVAL))
+  select(-fg_id)
   
 
 data %>%
@@ -92,32 +93,4 @@ data %>%
   as.data.frame()   
           
                             
-                            
-## Old code (not ready to delete)
-# 
-# # initialize an empty dataframe
-# data = NULL
-# for(i in 1:nrow(df)){
-#   # Grab player_id using first and last names. Trevor Bauer
-#   # had 2 entries, but one had a bunch of NAs. Didn't look too much into it
-#   # but will do more checking later
-#   player = playerid_lookup(df$last_name[i], df$first_name[i]) %>%
-#     filter(!is.na(fangraphs_id))
-#   
-#   # grab Fangrpahs ID
-#   id = player$fangraphs_id
-#   
-#   # Extract pitch info and add in player name and ID for filtering
-#   player1 = moneyPitches(id)
-#   player1$Name = paste(df$first_name[i], df$last_name[i])
-#   player1$ID = id
-#   
-#   data = rbind(data, player1)
-# }
-# 
-# # Extract the pitches which exceed the "money pitch" criteria
-# # 40% O-swing, 40% Zone, 15% Swstr
-# data %>%
-#   dplyr::filter(`O-Swing%` > 40 & `Zone%` > 40 & `SwStr%` > 15) %>%
-#   as.data.frame()                            
-                            
+ 
