@@ -1,0 +1,88 @@
+
+check.packages <- function(pkg){
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg)) 
+    install.packages(new.pkg, dependencies = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+}
+
+# Usage example
+packages<-c("ggplot2", "rvest", "purrr", "dplyr", "knitr", "kableExtra", "httr", "baseballr")
+check.packages(packages)
+
+
+require(rvest)
+require(purrr)
+require(baseballr)
+require(dplyr)
+require(rvest)
+require(knitr)
+require(kableExtra)
+require(httr)
+
+
+
+pullPitches = function(pitch_type = NULL, C = "0-0"){
+  
+  if(is.null(pitch_type)){
+    url = paste0('https://baseballsavant.mlb.com/statcast_search?hfPT=&hfAB=&hfBBT=&hfPR=foul%7Cfoul%5C.%5C.pitchout%7Chit%5C.%5C.into%5C.%5C.play%7Chit%5C.%5C.into%5C.%5C.play%5C.%5C.no%5C.%5C.out%7Chit%5C.%5C.into%5C.%5C.play%5C.%5C.score%7Cpitchout%5C.%5C.hit%5C.%5C.into%5C.%5C.play%5C.%5C.score%7Cfoul%5C.%5C.tip%7Cswinging%5C.%5C.pitchout%7Cswinging%5C.%5C.strike%7Cswinging%5C.%5C.strike%5C.%5C.blocked%7C&hfZ=&stadium=&hfBBL=&hfNewZones=&hfGT=R%7C&hfC=',
+                 gsub("-", "", C),
+                 '%7C&hfSea=2018%7C&hfSit=&player_type=pitcher&hfOuts=&opponent=&pitcher_throws=&batter_stands=&hfSA=&game_date_gt=&game_date_lt=&hfInfield=&team=&position=&hfOutfield=&hfRO=&home_road=&hfFlag=&hfPull=&metric_1=&hfInn=&min_pitches=0&min_results=0&group_by=league&sort_col=pitches&player_event_sort=h_launch_speed&sort_order=desc&min_pas=0&chk_pitch_type=on&chk_count=on#results')
+    
+  } else {
+    url = paste0('https://baseballsavant.mlb.com/statcast_search?hfPT=',
+                 pitch_type, 
+                 '%7C&hfAB=&hfBBT=&hfPR=foul%7Cfoul%5C.%5C.pitchout%7Chit%5C.%5C.into%5C.%5C.play%7Chit%5C.%5C.into%5C.%5C.play%5C.%5C.no%5C.%5C.out%7Chit%5C.%5C.into%5C.%5C.play%5C.%5C.score%7Cpitchout%5C.%5C.hit%5C.%5C.into%5C.%5C.play%5C.%5C.score%7Cfoul%5C.%5C.tip%7Cswinging%5C.%5C.pitchout%7Cswinging%5C.%5C.strike%7Cswinging%5C.%5C.strike%5C.%5C.blocked%7C&hfZ=&stadium=&hfBBL=&hfNewZones=&hfGT=R%7C&hfC=',
+                 gsub("-", "", C),
+                 '%7C&hfSea=2018%7C&hfSit=&player_type=pitcher&hfOuts=&opponent=&pitcher_throws=&batter_stands=&hfSA=&game_date_gt=&game_date_lt=&hfInfield=&team=&position=&hfOutfield=&hfRO=&home_road=&hfFlag=&hfPull=&metric_1=&hfInn=&min_pitches=0&min_results=0&group_by=league&sort_col=pitches&player_event_sort=h_launch_speed&sort_order=desc&min_pas=0&chk_pitch_type=on&chk_count=on#results')
+    
+  }
+ 
+  session = html_session(url)
+
+  test = session %>%
+    html_nodes(xpath='//*[@id="search_results"]') %>%
+    html_table(fill = T) %>%
+    # Pull out the last table 
+    .[[1]]
+  
+  test = test[!is.na(names(test))] %>%
+    dplyr::select("Rk.","Player","Results","Total Pitches","% of Pitches") %>%
+    filter(complete.cases(.))
+  
+  test$count = C
+  test$pitch_type = pitch_type
+  
+  return(test)
+}
+
+# pull data for all pitches thrown with "0-0" count
+pullPitches(C = "0-0")
+
+# pull data for all pitches thrown with "3-0" count
+pullPitches(C = "3-0")
+
+
+
+# define all counts in a vector
+types = c("0-0","0-1","0-2","1-1","2-1","3-1","1-2","2-2","3-2","1-0","2-0","3-0")
+
+
+# pull data for each count - all pitches
+test = map_df(types, function(i){
+  pullPitches(C = i)
+})
+test$'Season Total' = as.numeric(sum(test$`Total Pitches`))
+test$'Season %' = round((test$Results/test$`Season Total`)*100, 1)
+test
+
+
+
+# pull data for each count with pitch type = Curveball
+test = map_df(types, function(i){
+  pullPitches(pitch_type = "CU", C = i)
+})
+
+test$'Season Total' = as.numeric(sum(test$`Total Pitches`))
+test$'Season %' = round((test$Results/test$`Season Total`)*100, 1)
+test
