@@ -175,4 +175,4 @@ df1 %>%
 # ggplot(df1, aes(HR, pHR)) + geom_point()
 
 # Write a csv of the prediction data
-write.csv(df1, "~/PitcherList/Dan Richards/Predicted Home Runs.csv", row.names = F)
+# write.csv(df1, "~/PitcherList/Dan Richards/Predicted Home Runs.csv", row.names = F)
