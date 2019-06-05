@@ -1,4 +1,5 @@
 
+rm(list = ls())
 
 check.packages <- function(pkg){
   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
@@ -21,8 +22,10 @@ require(ggplot2)
 # Load in modelling data
 data = read.csv("~/PitcherList/Dan Richards/Modeling Data.csv")
 
+data$HR.PA = data$HR/data$PA
+
 # create the model to predict home runs using data from 2015-2018
-mod = lm(HR.PA. ~ PA + Brls.PA. + PULL.FB.LD + FB. + Soft. + xBA + LD. + K., data = data)
+mod = lm(HR.PA ~ PA + Brls.PA. + PULL.FB.LD + FB. + Soft. + xBA + LD. + K., data = data)
 
 # chech out variance inflation factors
 # car::vif(mod)
