@@ -9,18 +9,21 @@ check.packages <- function(pkg){
 }
 
 # Usage example
-packages<-c("ggplot2", "rvest", "purrr", "baseballr", "ggplot2")
-check.packages(packages)
+check.packages("pacman")
 
-require(rvest)
-require(dplyr)
-require(purrr)
-require(baseballr)
-require(ggplot2)
+p_load(rvest)
+p_load(dplyr)
+p_load(purrr)
+p_load_gh("BillPetti/baseballr")
+p_load(ggplot2)
+p_load(rstudioapi)
+
+#setwd(getSrcDirectory()[1])
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 
 # Load in modelling data
-data = read.csv("~/PitcherList/Dan Richards/Modeling Data.csv")
+data = read.csv("input/pHR_Modeling_Data.csv")
 
 data$HR.PA = data$HR/data$PA
 
@@ -42,7 +45,7 @@ mod = lm(HR.PA ~ PA + Brls.PA. + PULL.FB.LD + FB. + Soft. + xBA + LD. + K., data
 #####
 
 # Loadin manually created ID Map (FanGraphs to MLBIDs)
-IDs = read.csv("~/PitcherList/Dan Richards/ID map.csv")
+IDs = read.csv("input/ID_map.csv")
 IDs$playerid = as.character(IDs$playerid)
 IDs$Name = as.character(IDs$Name)
 
@@ -169,13 +172,13 @@ df1 %>%
                             "Dwight Smith Jr.","Vladimir Guerrero Jr."))
 
 # See the top 10 pHR leaders in 2019
-df1 %>% 
-  arrange(desc(pHR)) %>% 
-  head(n = 10)
+# df1 %>% 
+#   arrange(desc(pHR)) %>% 
+#   head(n = 10)
 
 
 # plot it if you like
 # ggplot(df1, aes(HR, pHR)) + geom_point()
 
 # Write a csv of the prediction data
-# write.csv(df1, "~/PitcherList/Dan Richards/Predicted Home Runs.csv", row.names = F)
+write.csv(df1, "output/pHR.csv", row.names = F)
