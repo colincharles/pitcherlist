@@ -1,4 +1,5 @@
 
+
 rm(list = ls())
 
 check.packages <- function(pkg){
@@ -17,6 +18,8 @@ p_load(purrr)
 p_load_gh("BillPetti/baseballr")
 p_load(ggplot2)
 p_load(rstudioapi)
+p_load(googledrive)
+p_load(openxlsx)
 
 #setwd(getSrcDirectory()[1])
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
@@ -172,13 +175,30 @@ df1 %>%
                             "Dwight Smith Jr.","Vladimir Guerrero Jr."))
 
 # See the top 10 pHR leaders in 2019
-# df1 %>% 
-#   arrange(desc(pHR)) %>% 
-#   head(n = 10)
+df1 %>%
+  arrange(desc(pHR)) %>%
+  head(n = 10)
 
 
-# plot it if you like
-# ggplot(df1, aes(HR, pHR)) + geom_point()
+## Create a new workbook
+wb <- createWorkbook()
+## Add a worksheet
+addWorksheet(wb, "pHR Calcs") 
 
-# Write a csv of the prediction data
-write.csv(df1, "output/pHR.csv", row.names = F)
+writeData(wb, sheet = 1, x = df1)
+
+## set col widths
+setColWidths(wb, 1, cols = 1:5, widths = "auto")
+
+headerStyle = createStyle(halign = "center")
+addStyle(wb, sheet = 1, headerStyle, rows = 1:200, cols = 1:6, gridExpand = TRUE)
+
+## Save workbook
+saveWorkbook(wb, "output/pHR.xlsx",
+             overwrite = TRUE)
+
+
+pVAL_sheet <- drive_update(media = "output/pHR.xlsx",
+                           file = as_id("1Qtyw3k8w21TZFB6-rIENMUo9uLfvlFxlmBaNt7E3Eug")) %>% 
+  drive_share(role = "reader", type = "anyone")
+
