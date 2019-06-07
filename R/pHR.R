@@ -21,8 +21,8 @@ p_load(rstudioapi)
 p_load(googledrive)
 p_load(openxlsx)
 
-#setwd(getSrcDirectory()[1])
-setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+setwd(system("pwd", intern = T))
+#setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 
 # Load in modelling data
