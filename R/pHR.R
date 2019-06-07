@@ -194,11 +194,11 @@ headerStyle = createStyle(halign = "center")
 addStyle(wb, sheet = 1, headerStyle, rows = 1:200, cols = 1:6, gridExpand = TRUE)
 
 ## Save workbook
-saveWorkbook(wb, "output/pHR.xlsx",
+saveWorkbook(wb, "output/pHR.csv",
              overwrite = TRUE)
 
 
-pVAL_sheet <- drive_update(media = "output/pHR.xlsx",
+pVAL_sheet <- drive_update(media = "output/pHR.csv",
                            file = as_id("1Qtyw3k8w21TZFB6-rIENMUo9uLfvlFxlmBaNt7E3Eug")) %>% 
   drive_share(role = "reader", type = "anyone")
 
