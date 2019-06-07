@@ -181,21 +181,23 @@ df1 %>%
 
 
 ## Create a new workbook
-wb <- createWorkbook()
+#wb <- createWorkbook()
 ## Add a worksheet
-addWorksheet(wb, "pHR Calcs") 
+#addWorksheet(wb, "pHR Calcs") 
 
-writeData(wb, sheet = 1, x = df1)
+#writeData(wb, sheet = 1, x = df1)
 
 ## set col widths
-setColWidths(wb, 1, cols = 1:5, widths = "auto")
+#setColWidths(wb, 1, cols = 1:5, widths = "auto")
 
-headerStyle = createStyle(halign = "center")
-addStyle(wb, sheet = 1, headerStyle, rows = 1:200, cols = 1:6, gridExpand = TRUE)
+#headerStyle = createStyle(halign = "center")
+#addStyle(wb, sheet = 1, headerStyle, rows = 1:200, cols = 1:6, gridExpand = TRUE)
 
 ## Save workbook
-saveWorkbook(wb, "output/pHR.csv",
-             overwrite = TRUE)
+#saveWorkbook(wb, "output/pHR.csv",
+#             overwrite = TRUE)
+
+write.csv(df1, "output/pHR.csv", row.names = F)
 
 
 pVAL_sheet <- drive_update(media = "output/pHR.csv",
