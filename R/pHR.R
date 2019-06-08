@@ -197,6 +197,8 @@ df1 %>%
 #saveWorkbook(wb, "output/pHR.csv",
 #             overwrite = TRUE)
 
+drive_auth()
+
 write.csv(df1, "output/pHR.csv", row.names = F)
 
 
