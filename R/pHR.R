@@ -197,7 +197,9 @@ df1 %>%
 #saveWorkbook(wb, "output/pHR.csv",
 #             overwrite = TRUE)
 
-drive_auth()
+# auth_token <- drive_auth()
+# saveRDS(auth_token, "input/sheet_token.rds")
+drive_auth("input/sheet_token.rds")
 
 write.csv(df1, "output/pHR.csv", row.names = F)
 
