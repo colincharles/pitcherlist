@@ -31,7 +31,7 @@ data = read.csv("input/pHR_Modeling_Data.csv")
 data$HR.PA = data$HR/data$PA
 
 # create the model to predict home runs using data from 2015-2018
-mod = lm(HR.PA ~ PA + Brls.PA. + PULL.FB.LD + FB. + Soft. + xBA + LD. + K., data = data)
+mod = lm(HR.PA. ~ PA + Brls.PA. + PULL.FB.LD + LD. + K. + BB., data = data)
 
 # chech out variance inflation factors
 # car::vif(mod)
