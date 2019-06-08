@@ -21,9 +21,12 @@ p_load(rstudioapi)
 p_load(googledrive)
 p_load(openxlsx)
 
-setwd(system("pwd", intern = T))
+setwd("/home/david/dev/forks/pitcherlist/R")
+
+#setwd(system("pwd", intern = T))
 #setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
+#print(getwd())
 
 # Load in modelling data
 data = read.csv("input/pHR_Modeling_Data.csv")
