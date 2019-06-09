@@ -18,8 +18,8 @@ p_load(purrr)
 p_load_gh("BillPetti/baseballr")
 p_load(ggplot2)
 p_load(rstudioapi)
-p_load(googledrive)
-p_load(openxlsx)
+# p_load(googledrive)
+# p_load(openxlsx)
 
 setwd("/home/david/dev/forks/pitcherlist/R")
 
@@ -34,7 +34,7 @@ data = read.csv("input/pHR_Modeling_Data.csv")
 data$HR.PA = data$HR/data$PA
 
 # create the model to predict home runs using data from 2015-2018
-mod = lm(HR.PA. ~ PA + Brls.PA. + PULL.FB.LD + LD. + K. + BB., data = data)
+mod = lm(HR.PA ~ PA + Brls.PA. + PULL.FB.LD + LD. + K. + BB., data = data)
 
 # chech out variance inflation factors
 # car::vif(mod)
@@ -98,7 +98,7 @@ statData %>%
 
 
 # Grab FanGraphs data from custom made table
-url = "https://www.fangraphs.com/leaders.aspx?pos=all&stats=bat&lg=all&qual=10&type=c,6,35,3,44,45,206,209,11,43&season=2019&month=0&season1=2019&ind=0&team=0&rost=0&age=15,58&filter=&players=0&page=1_5000"
+url = "https://www.fangraphs.com/leaders.aspx?pos=all&stats=bat&lg=all&qual=10&type=c,6,35,3,44,45,206,209,11,43,34&season=2019&month=0&season1=2019&ind=0&team=0&rost=0&age=15,58&filter=&players=0&page=1_5000"
 
 df = read_html(url) %>%
   html_nodes('.rgMasterTable') %>% 
@@ -158,7 +158,8 @@ df1 = df %>%
                 xBA = est_ba,
                 LD. = `LD%`,
                 Brls.PA. = brl_pa,
-                PULL.FB.LD = Pull.LD.FB) 
+                PULL.FB.LD = Pull.LD.FB,
+                BB. = `BB%`) 
 
 
 # Predict 2019 home runs using model created at start of script
@@ -208,6 +209,6 @@ write.csv(df1, "output/pHR.csv", row.names = F)
 
 
 pVAL_sheet <- drive_update(media = "output/pHR.csv",
-                           file = as_id("1Qtyw3k8w21TZFB6-rIENMUo9uLfvlFxlmBaNt7E3Eug")) %>% 
+                           file = as_id("1Qtyw3k8w21TZFB6-rIENMUo9uLfvlFxlmBaNt7E3Eug")) %>%
   drive_share(role = "reader", type = "anyone")
 
