@@ -40,7 +40,7 @@ df = rbind(df1[,c("Date","Team","wRC_plus")], df2[,c("Date","Team","wRC_plus")])
 
 
 # plot it
-df %>%
+p = df %>%
   group_by(Team) %>%
   mutate(wRC_MA = rollmean(x = wRC_plus, 10, align = "right", fill = NA)) %>% 
   ggplot(., aes(Date, wRC_MA, col = Team)) + geom_path(lwd = 1.05) +
