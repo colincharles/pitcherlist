@@ -1,6 +1,8 @@
 
 
 require(baseballr)
+require(dplyr)
+require(ggplot2)
 require(zoo)
 
 # create a new function to grab the minor league data
