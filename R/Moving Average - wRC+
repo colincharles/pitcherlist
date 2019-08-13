@@ -1,5 +1,3 @@
-
-
 require(baseballr)
 require(dplyr)
 require(ggplot2)
@@ -23,6 +21,7 @@ batter_game_logs_fg_ml = function(playerid, year){
 
 
 # major league data from 2018
+df = batter_game_logs_fg(playerid = 20123, year = 2019)
 df1 = batter_game_logs_fg(playerid = 20123, year = 2018)
 
 # minor league data 2016 to 2018
@@ -32,7 +31,8 @@ df4 = batter_game_logs_fg_ml(playerid = 20123, year = 2016)
 
 
 # pull all data together
-df = rbind(df1[,c("Date","Team","wRC_plus")], df2[,c("Date","Team","wRC_plus")]) %>% 
+df = rbind(df[,c("Date","Team","wRC_plus")], df1[,c("Date","Team","wRC_plus")]) %>% 
+  rbind(., df2[,c("Date","Team","wRC_plus")]) %>% 
   rbind(., df3[,c("Date","Team","wRC_plus")]) %>% 
   rbind(., df4[,c("Date","Team","wRC_plus")]) %>% 
   mutate(Date = as.Date(Date, format = "%Y-%m-%d"),
@@ -48,7 +48,9 @@ p = df %>%
   ggplot(., aes(Date, wRC_MA, col = Team)) + geom_path(lwd = 1.05) +
   ylab("15 Game wRC+ moving average") + 
   theme_bw() + geom_hline(data = NULL, aes(yintercept = 100), lty = 2) + 
-  facet_wrap(~"Juan Soto - 2018" + Year, scales = "free_x") +
+  facet_wrap(~"Juan Soto" + Year, scales = "free_x") +
   theme(panel.grid = element_blank(),
         strip.background = element_rect(fill = "lightblue"),
         strip.text = element_text(face = "bold", size = rel(1.3))) 
+        
+p
