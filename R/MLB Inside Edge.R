@@ -3,6 +3,7 @@ library(xml2)
 require(dplyr)
 require(ggplot2)
 require(purrr)
+require(baseballr)
 
 # Need to go to this link and copy/paste to get the xml example data
 # http://gamedata.inside-edge.com/api/demopostgame/game/2019/07/05/anamlb-houmlb-1/
@@ -159,9 +160,9 @@ boxscore1 = boxscore %>%
          AB = (PA - (uBB + IBB + HBP + SF)),
          Avg = H/AB,
          OBP = (H+uBB+HBP)/(AB+uBB+HBP+SF)) %>% 
-  mutate(season = "2019",
-         wOBA = format(wOBA, nsmall = 3)) 
+  mutate(season = "2019") 
   
-baseballr::woba_plus(boxscore1) %>% 
+woba_plus(boxscore1) %>% 
   mutate(Avg = format(Avg, nsmall = 3, digits = 3),
-         OBP = format(OBP, digits = 3, nsmall = 3))
+         OBP = format(OBP, digits = 3, nsmall = 3),
+         wOBA = format(wOBA, nsmall = 3))
