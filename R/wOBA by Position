@@ -1,0 +1,78 @@
+
+rquire(dplyr)
+require(ggplot2)
+require(ggeconodist)
+require(xml2)
+require(rvest)
+
+positions = c("c", "1b", "2b","3b","ss","rf","lf", "cf","dh")
+
+data = NULL
+for(i in positions){
+  url = paste0("https://www.fangraphs.com/leaders.aspx?pos=", i,
+               "&stats=bat&lg=all&qual=300&type=8&season=2019&month=0&season1=2019&ind=0&team=0&rost=0&age=0&filter=&players=0&startdate=2019-01-01&enddate=2019-12-31&page=1_500")
+  data1 = xml2::read_html(url) %>% 
+    html_nodes('.rgMasterTable') %>% 
+    # Extract the raw text as a table
+    html_table() %>%
+    as.data.frame() %>%
+    dplyr::slice(c(-1,-3))
+  
+  
+  colnames(data1) = data1[1,]
+  
+  data1 = data1 %>%
+    slice(-1) %>% 
+    dplyr::select(-"#") %>% 
+    mutate(position = toupper(i))
+  
+  data = rbind(data, data1)
+}
+
+
+# install.packages("ggeconodist", repos = "https://cinc.rud.is")
+
+require(ggeconodist)
+
+
+data %>% 
+  mutate(Position = factor(position, levels = c("C","1B","2B","3B","SS","LF","CF","RF","DH"))) %>%
+  group_by(Position) %>% 
+  tally
+
+
+data %>% 
+  dplyr::filter(position == "DH")
+
+
+gg = data %>% 
+  mutate(Position = factor(position, levels = c("C","1B","2B","3B","SS","LF","CF","RF","DH"))) %>%
+  mutate(wOBA = as.numeric(as.character(wOBA))) %>% 
+  group_by(Position) %>% 
+  summarize(Med = median(wOBA),
+            tenth = stats::quantile(wOBA, 0.1),
+            ninetieth = stats::quantile(wOBA, 0.9)) %>% 
+  ggplot(., aes(x = reorder(Position, desc(Position)))) +
+  geom_econodist(
+    aes(ymin = tenth, median = Med, ymax = ninetieth, 
+        median_point_size = 4),
+    stat = "identity", show.legend = TRUE
+  ) +
+  scale_y_continuous(expand = c(0,0), position = "left", limits = c(0.275, 0.400)) +
+  coord_flip() +# scale_x_discrete(limits = rev(levels(Position))) + 
+  labs(
+    x = NULL, y = NULL,
+    title = "2019 wOBA by Position",
+    subtitle = "min. 300 PA",
+    caption = "Data from FanGraphs"
+  ) +
+  theme_econodist() + theme(plot.title = element_text(hjust = 0.5),
+                            plot.subtitle = element_text(hjust = 0.5))
+
+
+
+grid.newpage()
+left_align(gg, c("subtitle", "title", "caption")) %>% 
+  add_econodist_legend(econodist_legend_grob(),
+                       below = "axis-b", just = "right") %>% 
+  grid.draw()
