@@ -162,7 +162,9 @@ boxscore1 = boxscore %>%
          OBP = (H+uBB+HBP)/(AB+uBB+HBP+SF)) %>% 
   mutate(season = "2019") 
   
-woba_plus(boxscore1) %>% 
+baseballr::woba_plus(boxscore1) %>% 
   mutate(Avg = format(Avg, nsmall = 3, digits = 3),
          OBP = format(OBP, digits = 3, nsmall = 3),
-         wOBA = format(wOBA, nsmall = 3))
+         wOBA = format(wOBA, nsmall = 3, digits = 3),
+         'K%' = format(100*(SO/PA), nsmall = 1, digits = 1),
+         'BB%' = format(100*(uBB/PA), nsmall = 1, digits = 1))
