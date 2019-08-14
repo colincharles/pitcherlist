@@ -10,7 +10,7 @@ pHR_data_scrape = function(minDate = "2019-03-01", maxDate = "2019-05-31"){
   # extract the year from minDate - this should prevent errors from other years
   season = substr(minDate, 1, 4)
   
-  K_data = read_csv(paste0("https://baseballsavant.mlb.com/statcast_search/csv?hfPT=&hfAB=strikeout%7Cstrikeout%5C.%5C.double%5C.%5C.play%7C&hfBBT=&hfPR=&hfZ=&stadium=&hfBBL=&hfNewZones=&hfGT=R%7C&hfC=&hfSea=",season,"%7C&hfSit=&player_type=batter&hfOuts=&opponent=&pitcher_throws=&batter_stands=&hfSA=&game_date_gt=", minDate,
+  K_data = readr::read_csv(paste0("https://baseballsavant.mlb.com/statcast_search/csv?hfPT=&hfAB=strikeout%7Cstrikeout%5C.%5C.double%5C.%5C.play%7C&hfBBT=&hfPR=&hfZ=&stadium=&hfBBL=&hfNewZones=&hfGT=R%7C&hfC=&hfSea=",season,"%7C&hfSit=&player_type=batter&hfOuts=&opponent=&pitcher_throws=&batter_stands=&hfSA=&game_date_gt=", minDate,
                  "&game_date_lt=", maxDate,
                  "&hfInfield=&team=&position=&hfOutfield=&hfRO=&home_road=&hfFlag=&hfPull=&metric_1=&hfInn=&min_pitches=0&min_results=0&group_by=name&sort_col=pitches&player_event_sort=h_launch_speed&sort_order=desc&min_pas=0#results")) %>% 
     dplyr::select(pitches, player_id, player_name) %>% 
@@ -63,12 +63,13 @@ pHR_data_scrape = function(minDate = "2019-03-01", maxDate = "2019-05-31"){
     left_join(., LD_data) %>% 
     left_join(., HR_data) %>% 
     replace(., is.na(.), 0) %>% 
+    mutate(season = season) %>% 
     mutate(brls_PA = 100 * (barrels/PA),
            pulledFBLD = pulledFBLD/PA,
            SO = SO/PA,
            BB = BB/PA,
            LD = LD/PA) %>% 
-    dplyr::select(player_name, player_id, PA, everything())
+    dplyr::select(player_name, player_id, season, PA, everything()) 
   
   return(df)
   
@@ -78,16 +79,13 @@ pHR_data_scrape = function(minDate = "2019-03-01", maxDate = "2019-05-31"){
 # Do some testing. Scrape all data from 2015 to end of 2018
 
 test1 = pHR_data_scrape(minDate = "2015-03-01", maxDate = "2015-10-31")
-test1$season = 2015
 
 test2 = pHR_data_scrape(minDate = "2016-03-01", maxDate = "2016-10-31")
-test2$season = 2016
 
 test3 = pHR_data_scrape(minDate = "2017-03-01", maxDate = "2017-10-31")
-test3$season = 2017
 
 test4 = pHR_data_scrape(minDate = "2018-03-01", maxDate = "2018-10-31")
-test4$season = 2018
+
 
 data1 = rbind(test1, test2, test3, test4)
 data1$HR.PA = data1$HR/data1$PA
