@@ -1,8 +1,28 @@
+
 require(baseballr)
 require(dplyr)
 require(googledrive)
 require(openxlsx)
 
+
+teamAbb = data.frame(Opp. = c("Toronto Blue Jays", "Texas Rangers", "New York Yankees",
+                              "Baltimore Orioles", "Cleveland Indians", "Boston Red Sox",
+                              "Milwaukee Brewers", "Minnesota Twins", "Chicago White Sox",
+                              "Houston Astros", "Colorado Rockies", "Arizona Diamondbacks",
+                              "San Diego Padres", "Tampa Bay Rays", "San Francisco Giants",
+                              "Oakland Athletics", "Washington Nationals", "Cincinnati Reds",
+                              "Philadelphia Phillies", "Chicago Cubs", "Miami Marlins",
+                              "Los Angeles Dodgers", "Detroit Tigers", "Seattle Mariners",
+                              "Atlanta Braves", "New York Mets", "Los Angeles Angels",
+                              "Pittsburgh Pirates", "Kansas City Royals","St. Louis Cardinals"),
+                     Abb = c("TOR","TEX","NYY","BAL","CLE","BOS","MIL","MIN","CHW","HOU","COL",
+                             "ARI","SD","TB","SF","OAK","WSH","CIN","PHI","CHC","MIA","LAD","DET","SEA",
+                             "ATL","NYM","LAA","PIT","KC","STL"),
+                     Name = c("Blue Jays", "Rangers", "Yankees","Orioles", "Indians", "Red Sox",
+                              "Brewers", "Twins", "White Sox","Astros", "Rockies", "Diamondbacks",
+                              "Padres", "Bay Rays", "Giants","Athletics", "Nationals", "Reds",
+                              "Phillies", "Cubs", "Marlins","Dodgers", "Tigers", "Mariners",
+                              "Braves", "Mets", "Angels","Pirates", "Royals","Cardinals"))
 gameData = NULL
 StartData = NULL
 Opponent = NULL
@@ -36,7 +56,7 @@ for(i in dates){
     opponent = get_probables_mlb(j) %>% 
       dplyr::select(game_pk, fullName, team) %>% 
       mutate(Opp. = rev(team)) %>% 
-      dplyr::select(-team) %>% 
+      # dplyr::select(-team) %>% 
       mutate(Date = i) %>% 
       dplyr::rename(Pitcher = fullName) %>% 
       mutate(Type = ifelse(Opp. == home_team$teams.home.team.name, "Home", "Away"))
@@ -60,26 +80,15 @@ StarterData = left_join(gameData, StartData) %>%
                 'Home Pitcher' = Home)
 
 
-teamAbb = data.frame(Opp. = c("Toronto Blue Jays", "Texas Rangers", "New York Yankees",
-                              "Baltimore Orioles", "Cleveland Indians", "Boston Red Sox",
-                              "Milwaukee Brewers", "Minnesota Twins", "Chicago White Sox",
-                              "Houston Astros", "Colorado Rockies", "Arizona Diamondbacks",
-                              "San Diego Padres", "Tampa Bay Rays", "San Francisco Giants",
-                              "Oakland Athletics", "Washington Nationals", "Cincinnati Reds",
-                              "Philadelphia Phillies", "Chicago Cubs", "Miami Marlins",
-                              "Los Angeles Dodgers", "Detroit Tigers", "Seattle Mariners",
-                              "Atlanta Braves", "New York Mets", "Los Angeles Angels",
-                              "Pittsburgh Pirates", "Kansas City Royals","St. Louis Cardinals"),
-                     Abb = c("TOR","TEX","NYY","BAL","CLE","BOS","MIL","MIN","CHW","HOU","COL",
-                             "ARI","SD","TB","SF","OAK","WSH","CIN","PHI","CHC","MIA","LAD","DET","SEA",
-                             "ATL","NYM","LAA","PIT","KC","STL"))
 
 Opponent1 = Opponent %>% 
   dplyr::filter(Date <= Sys.Date() + 1) %>% 
-  dplyr::select(Date, Pitcher, Opp., Type) %>% 
+  dplyr::select(Date, Pitcher, Opp., Type, team) %>% 
+  left_join(., teamAbb[,c("Opp.","Abb")]) %>% 
+  left_join(., teamAbb[,c("Opp.","Name")], by = c("team" = "Opp.")) %>% 
+  dplyr::select(-team) %>% 
   mutate(Pitcher = sub('(.*)\\,\\s+(.*)','\\2 \\1', Pitcher),
-         Pitcher = ifelse(is.na(Pitcher), "TBD", Pitcher)) %>% 
-  left_join(., teamAbb) %>% 
+         Pitcher = ifelse(is.na(Pitcher), paste("TBD", Name, "SP"), Pitcher)) %>% 
   mutate(Opp. = ifelse(Type == "Home", paste("@", Abb), paste("vs.", Abb))) %>% 
   dplyr::select(Date, Pitcher, Opp.)
 
@@ -120,7 +129,7 @@ for(i in 1:(length(dates) + 1)){
   } else if(i == 3){
     addWorksheet(wb, "Tomorrow's Games") 
   } else {
-    addWorksheet(wb, paste(format(as.Date(dates[i], format = "%d-%b-%Y"), format = "%A"), dates[i]))
+    addWorksheet(wb, paste(format(as.Date(dates[i-1], format = "%d-%b-%Y"), format = "%A"), dates[i-1]))
   }
   
   bodyStyle = createStyle(halign = "center", fontSize = 14)
