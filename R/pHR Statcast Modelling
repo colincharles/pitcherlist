@@ -5,6 +5,7 @@ p_load(dplyr)
 p_load(ggplot2)
 p_load(DAAG)
 
+
 pHR_data_scrape = function(minDate = "2019-03-01", maxDate = "2019-05-31"){
   
   # extract the year from minDate - this should prevent errors from other years
@@ -64,7 +65,7 @@ pHR_data_scrape = function(minDate = "2019-03-01", maxDate = "2019-05-31"){
     left_join(., HR_data) %>% 
     replace(., is.na(.), 0) %>% 
     mutate(season = season) %>% 
-    mutate(brls_PA = 100 * (barrels/PA),
+    mutate(brls_PA = barrels/PA,
            pulledFBLD = pulledFBLD/PA,
            SO = SO/PA,
            BB = BB/PA,
@@ -77,18 +78,16 @@ pHR_data_scrape = function(minDate = "2019-03-01", maxDate = "2019-05-31"){
 
 
 # Do some testing. Scrape all data from 2015 to end of 2018
-
 test1 = pHR_data_scrape(minDate = "2015-03-01", maxDate = "2015-10-31")
-
 test2 = pHR_data_scrape(minDate = "2016-03-01", maxDate = "2016-10-31")
-
 test3 = pHR_data_scrape(minDate = "2017-03-01", maxDate = "2017-10-31")
-
 test4 = pHR_data_scrape(minDate = "2018-03-01", maxDate = "2018-10-31")
 
 
 data1 = rbind(test1, test2, test3, test4)
+rm(test1, test2, test3, test4)
 data1$HR.PA = data1$HR/data1$PA
+
 
 #####
 #
@@ -102,6 +101,33 @@ DAAG::cv.lm(data = data1[data1$PA > 200,], form.lm = formula(HR.PA ~ PA + brls_P
             m = 10, printit = FALSE)
 
 #############################################################
+
+# create data using 2015-2018 data
+
+mod = lm(HR.PA ~ PA + brls_PA + pulledFBLD + LD + SO + BB, data = data1)
+
+# check variance inflation factor (if you want)
+# car::vif(mod)
+
+# grab 2019 data
+df = pHR_data_scrape(minDate = "2019-03-01", maxDate = Sys.Date())
+
+# Using the data from previous years, predict pHR for 2019
+df %>%
+  dplyr::select(player_name, player_id, PA, SO, BB, pulledFBLD, LD, brls_PA, HR) %>% 
+  mutate(`pHR/PA` = predict(mod, newdata = .)) %>%  
+  mutate(pHR = `pHR/PA` * PA) %>% 
+  dplyr::arrange(desc(pHR)) %>% 
+  dplyr::select(player_name, player_id, PA, SO, BB,
+                pulledFBLD, LD, brls_PA,`pHR/PA`, HR, pHR) %>% 
+  mutate('pHR - HR' = pHR - HR) 
+
+
+#####
+#
+### End of top section
+#
+#####
 
 
 
