@@ -5,6 +5,95 @@ require(ggplot2)
 require(purrr)
 require(baseballr)
 
+
+
+
+rm(list = ls())
+require(httr)
+
+Inside_Edge = function(GHUID, api_key = api_key){
+  
+  url = paste0("http://gamedata.inside-edge.com/api/ie/game/", GHUID,
+               "/?apikey=", api_key)
+  
+  x = jsonlite::fromJSON(url, simplifyVector=F)
+  xx = lapply(seq_along(x), FUN = function(i) names(x[[i]]))
+  pp = unlist(which(xx == "PitchPush"))
+  dat1 = lapply(pp, FUN = function(i) as.data.frame(do.call("cbind", x[[i]]$PitchPush)))
+  
+  df = purrr::map_df(dat1, dplyr::bind_rows)
+  return(df)
+}
+
+IDs = read.csv("~/Inside Edge/Inside Edge Game IDs.csv", stringsAsFactors = FALSE)
+# IDs = head(IDs)
+
+# dat2 = purrr::map_df(IDs$GHUID, Inside_Edge(x, api_key = api_key))
+
+future::plan("multiprocess")
+tictoc::tic()
+dat = IDs$GHUID %>% 
+  furrr::future_map(~Inside_Edge(.x, api_key = api_key))
+tictoc::toc()
+
+
+# dat = IDs$GHUID %>% 
+#   purrr::map(~ Inside_Edge(.x, api_key = api_key))
+# 
+# dat2 = dat %>% 
+#   dplyr::bind_rows()
+
+#
+#
+#
+
+# http://gamedata.inside-edge.com/api/ie/game/{GHUID}/?apikey={customerkey}
+# GHUID = "2019/07/01/balmlb-tbamlb-1"
+# 
+# url = paste0("http://gamedata.inside-edge.com/api/ie/game/", GHUID,
+#              "/?apikey=", api_key)
+# # x = read_html(url)
+# x = jsonlite::fromJSON(url, simplifyVector=F)
+# xx = lapply(seq_along(x), FUN = function(i) names(x[[i]]))
+# pp = unlist(which(xx == "PitchPush"))
+# dat1 = lapply(pp, FUN = function(i) as.data.frame(x[[i]]))
+# 
+# df = purrr::map_df(dat1, dplyr::bind_rows)
+
+
+
+for(ii in pp){
+  test1 = as.data.frame(do.call("cbind", x[[ii]]$PitchPush))
+}
+
+future::plan("sequential")
+tictoc::tic()
+nothingness <- furrr::future_map(c(2, 2, 2), ~Sys.sleep(.x))
+tictoc::toc()
+
+future::plan("multiprocess")
+tictoc::tic()
+nothingness <- furrr::future_map(c(2, 2, 2), ~Sys.sleep(.x))
+tictoc::toc()
+
+future::plan("sequential")
+tictoc::tic()
+dat = IDs$GHUID %>% 
+  furrr::future_map(~Inside_Edge(.x, api_key = api_key))
+tictoc::toc()
+
+future::plan("multiprocess")
+tictoc::tic()
+dat = IDs$GHUID %>% 
+  furrr::future_map(~Inside_Edge(.x, api_key = api_key))
+tictoc::toc()
+
+
+
+dat2 = dat %>% 
+  dplyr::bind_rows()
+
+
 # Need to go to this link and copy/paste to get the xml example data
 # http://gamedata.inside-edge.com/api/demopostgame/game/2019/07/05/anamlb-houmlb-1/
 
