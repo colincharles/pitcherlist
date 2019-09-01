@@ -1,15 +1,10 @@
 
-library(xml2)
-require(dplyr)
-require(ggplot2)
-require(purrr)
-require(baseballr)
-
-
-
-
 rm(list = ls())
+
+require(dplyr)
 require(httr)
+
+api_key = scan("~/PitcherList/MLB Inside Edge/api_key.txt", character(), quote = "")
 
 Inside_Edge = function(GHUID, api_key = api_key){
   
@@ -25,74 +20,58 @@ Inside_Edge = function(GHUID, api_key = api_key){
   return(df)
 }
 
-IDs = read.csv("~/Inside Edge/Inside Edge Game IDs.csv", stringsAsFactors = FALSE)
-# IDs = head(IDs)
-
-# dat2 = purrr::map_df(IDs$GHUID, Inside_Edge(x, api_key = api_key))
-
-future::plan("multiprocess")
-tictoc::tic()
-dat = IDs$GHUID %>% 
-  furrr::future_map(~Inside_Edge(.x, api_key = api_key))
-tictoc::toc()
+IDs = read.table("~/PitcherList/MLB Inside Edge/Inside Edge Game IDs.txt", stringsAsFactors = FALSE, header = T)
+# IDs = head(IDs, n=15)
 
 
+# future::plan("multiprocess")
+# tictoc::tic()
 # dat = IDs$GHUID %>% 
-#   purrr::map(~ Inside_Edge(.x, api_key = api_key))
-# 
-# dat2 = dat %>% 
-#   dplyr::bind_rows()
-
-#
-#
-#
-
-# http://gamedata.inside-edge.com/api/ie/game/{GHUID}/?apikey={customerkey}
-# GHUID = "2019/07/01/balmlb-tbamlb-1"
-# 
-# url = paste0("http://gamedata.inside-edge.com/api/ie/game/", GHUID,
-#              "/?apikey=", api_key)
-# # x = read_html(url)
-# x = jsonlite::fromJSON(url, simplifyVector=F)
-# xx = lapply(seq_along(x), FUN = function(i) names(x[[i]]))
-# pp = unlist(which(xx == "PitchPush"))
-# dat1 = lapply(pp, FUN = function(i) as.data.frame(x[[i]]))
-# 
-# df = purrr::map_df(dat1, dplyr::bind_rows)
+#   furrr::future_map(~Inside_Edge(.x, api_key = api_key))
+# tictoc::toc()
 
 
+require(parallel)
+cl <- makeCluster(3)
+clusterEvalQ(cl, { c(library(xml2), library(jsonlite), library(dplyr)) })  # you need to export packages as well
+clusterExport(cl, "Inside_Edge")  # each worker is a new environment, you will need to export variables/functions to
+clusterExport(cl, "api_key")  # each worker is a new environment, you will need to export variables/functions to
+# tictoc::tic()
+DATA <- parallel::parLapply(cl, IDs$GHUID,  fun = function(i) Inside_Edge(i, api_key = api_key))   
+stopCluster(cl)
+# tictoc::toc()
 
-for(ii in pp){
-  test1 = as.data.frame(do.call("cbind", x[[ii]]$PitchPush))
+
+DATA = bind_rows(DATA)
+
+percent <- function(x, digits = 2, format = "f", ...) {
+  paste0(formatC(100 * x, format = format, digits = digits, ...), "%")
 }
 
-future::plan("sequential")
-tictoc::tic()
-nothingness <- furrr::future_map(c(2, 2, 2), ~Sys.sleep(.x))
-tictoc::toc()
-
-future::plan("multiprocess")
-tictoc::tic()
-nothingness <- furrr::future_map(c(2, 2, 2), ~Sys.sleep(.x))
-tictoc::toc()
-
-future::plan("sequential")
-tictoc::tic()
-dat = IDs$GHUID %>% 
-  furrr::future_map(~Inside_Edge(.x, api_key = api_key))
-tictoc::toc()
-
-future::plan("multiprocess")
-tictoc::tic()
-dat = IDs$GHUID %>% 
-  furrr::future_map(~Inside_Edge(.x, api_key = api_key))
-tictoc::toc()
+DATA %>% 
+  mutate(Velo = as.numeric(Velo)) %>% 
+  group_by(PitcherID, PitcherName, PitchType) %>% 
+  summarize(Velo = mean(Velo, na.rm = TRUE),
+            N = n()) %>% 
+  group_by(PitcherID, PitcherName) %>% 
+  mutate(Usage = N/sum(N)) %>% 
+  mutate(Usage_perc = percent(Usage)) %>% 
+  write.csv(., "~/PitcherList/MLB Inside Edge/July 2019 MLB Inside Edge Example.csv", row.names = F)
 
 
-
-dat2 = dat %>% 
-  dplyr::bind_rows()
-
+######
+#
+### End here
+#
+#####
+    
+                            
+                            
+library(xml2)
+require(dplyr)
+require(ggplot2)
+require(purrr)
+require(baseballr)
 
 # Need to go to this link and copy/paste to get the xml example data
 # http://gamedata.inside-edge.com/api/demopostgame/game/2019/07/05/anamlb-houmlb-1/
