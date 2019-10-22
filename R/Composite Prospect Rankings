@@ -1,0 +1,46 @@
+require(dplyr)
+
+# Need to retrieve prospect ranks as they are released through the off-season
+# Will probably try to add these lists to a google drive and pull the data from there
+
+cross = read.csv("Fantrax Rank.csv")
+
+butler = read.csv("Ray Butler Top 200.csv")
+
+prospectsLive = read.csv("ProspectsLive Fantasy Top 100 Prospects.csv")
+
+
+# Remove the punctuation from the names (right now only periods) eg. CJ Abrams vs C.J. Abrams
+# and get the data into a format where it's workable
+
+cross = cross %>% 
+  mutate(Name = as.character(Name),
+         Name = gsub("[.]","", Name)) %>% 
+  dplyr::select(Cross = Rank, Name, Team)
+
+names(butler) = c("Rank","Info", "Position","Age")
+butler$Info = as.character(butler$Info)
+
+butler = butler %>% 
+  mutate(Name = as.character(sapply(strsplit(Info, split=',', fixed = TRUE), function(x) (x[1]))),
+         Name = gsub("[.]","", Name),
+         Team = trimws(as.character(sapply(strsplit(Info, split=',', fixed = TRUE), function(x) (x[2])))),
+         Team = as.character(sapply(strsplit(Team, split=' ', fixed = TRUE), function(x) (x[1])))) %>% 
+  dplyr::select(Butler = Rank, Name, Team)
+
+prospectsLive = prospectsLive %>% 
+  mutate(Name = as.character(Name),
+         Name = gsub("[.]","", Name)) %>% 
+  dplyr::select(PLive = Rank, Name, Team)
+
+
+full_join(cross, butler) %>% 
+  full_join(., prospectsLive) %>% 
+  dplyr::select(Name, Team, everything()) %>% 
+  # head(n = 20) %>% 
+  replace(., is.na(.), 1000) %>%
+  mutate(Average = round(base::rowMeans(dplyr::select(., c(-Name, -Team)), na.rm = TRUE),1)) %>% 
+  arrange(Average) %>% 
+  mutate(High = unlist(purrr::pmap(dplyr::select(., c(-Name, -Team, -Average)), min)),
+         Low = unlist(purrr::pmap(dplyr::select(., c(-Name, -Team, -Average)), max))) %>% 
+  mutate(Low = ifelse(Low == 1000, NA, Low))
