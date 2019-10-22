@@ -1,5 +1,5 @@
 
-rquire(dplyr)
+require(dplyr)
 require(ggplot2)
 require(ggeconodist)
 require(xml2)
