@@ -1,0 +1,120 @@
+
+require(baseballr)
+require(dplyr)
+require(ggplot2)
+
+
+pitch = scrape_statcast_savant(start_date = "2019-03-01", end_date = Sys.Date(),
+                                playerid = 594835, player_type = "pitcher")
+
+pitch1 = scrape_statcast_savant(start_date = "2019-03-01", end_date = Sys.Date(),
+                               playerid = 543037, player_type = "pitcher")
+
+pitch2 = scrape_statcast_savant(start_date = "2019-03-01", end_date = Sys.Date(),
+                                playerid = 657624, player_type = "pitcher")
+
+head(pitch)
+
+
+# https://tht.fangraphs.com/pitch-movement-spin-efficiency-and-all-that/
+
+# need to update the K value. Get weather info by game!!
+K = 0.005153
+
+rbind(pitch, pitch1, pitch2) %>% 
+  dplyr::select(player_name, pitch_name, release_speed, release_pos_x, release_pos_z, pfx_x, pfx_z, plate_x, plate_z,
+                vx0, vy0, vz0, ax, ay, az, release_spin_rate, release_extension) %>% 
+  dplyr::filter(complete.cases(.)) %>% 
+  group_by(player_name) %>% 
+  mutate(release_pos_y = 60 - release_extension,
+         tR = (-vy0 - sqrt(vy0^2 - 2*ay* (50-release_pos_y)))/ay,
+         vxR = vx0 + ax*tR,
+         vyR = vy0 + ay*tR,
+         vzR = vz0 + az*tR,
+         dv0 = release_speed - sqrt(vxR^2 + vyR^2 + vzR^2)/1.467,
+         tf = (-vyR - sqrt(vyR^2 - 2*ay * (release_pos_y - 17/12)))/ay,
+         x_mvt = (plate_x - release_pos_x - (vxR/vyR)*(17/12 - release_pos_y)),
+         z_mvt = (plate_z - release_pos_z - (vzR/vyR)*(17/12 - release_pos_y)) + 0.5*32.174*tf^2,
+         vxbar = (2*vxR + ax*tf)/2,
+         vybar = (2*vyR + ay*tf)/2,
+         vzbar = (2*vzR + az*tf)/2,
+         vbar = sqrt(vxbar^2 + vybar^2 + vzbar^2),
+         adrag = -(ax*vxbar + ay*vybar + (az+32.174)*vzbar)/vbar,
+         Cd = adrag/(K*vbar^2),
+         amagx = ax + adrag*vxbar/vbar,
+         amagy = ay + adrag*vybar/vbar,
+         amagz = az + adrag*vzbar/vbar+32.174,
+         amag = sqrt(amagx^2 + amagy^2 + amagz^2),
+         Mx = 0.5*amagx*tf^2*12,
+         Mz = 0.5*amagz*tf^2*12,
+         Cl = amag/(K*vbar^2),
+         S = 0.4*Cl/(1-2.32*Cl),
+         SpinT = 78.92*S*vbar,
+         SpinTX = SpinT * (vybar*amagz - vzbar*amagy)/(amag*vbar),
+         SpinTY = SpinT * (vzbar*amagx - vxbar*amagz)/(amag*vbar),
+         SpinTZ = SpinT * (vxbar*amagy - vybar*amagx)/(amag*vbar),
+         spin_check = round(sqrt(SpinTX^2 + SpinTY^2 + SpinTZ^2) - SpinT, 1),
+         phi = as.integer(ifelse(amagz > 0, atan2(amagx, amagz)*180/pi, 360 + atan2(amagx, amagz)*180/pi) + 90),
+         spin_eff = SpinT/release_spin_rate,
+         theta = as.integer(ifelse(spin_eff <= 1, acos(spin_eff)*180/pi, ""))) %>% 
+  as.data.frame() %>% 
+  arrange(pitch_name, theta)
+  
+
+
+
+
+
+rbind(pitch, pitch1, pitch2) %>% 
+  dplyr::select(player_name, game_date, pitch_name, release_speed, release_pos_x, release_pos_z, pfx_x, pfx_z, plate_x, plate_z,
+                vx0, vy0, vz0, ax, ay, az, release_spin_rate, release_extension) %>% 
+  dplyr::filter(complete.cases(.)) %>% 
+  group_by(player_name) %>% 
+  mutate(release_pos_y = 60 - release_extension,
+         tR = (-vy0 - sqrt(vy0^2 - 2*ay* (50-release_pos_y)))/ay,
+         vxR = vx0 + ax*tR,
+         vyR = vy0 + ay*tR,
+         vzR = vz0 + az*tR,
+         dv0 = release_speed - sqrt(vxR^2 + vyR^2 + vzR^2)/1.467,
+         tf = (-vyR - sqrt(vyR^2 - 2*ay * (release_pos_y - 17/12)))/ay,
+         x_mvt = (plate_x - release_pos_x - (vxR/vyR)*(17/12 - release_pos_y)),
+         z_mvt = (plate_z - release_pos_z - (vzR/vyR)*(17/12 - release_pos_y)) + 0.5*32.174*tf^2,
+         vxbar = (2*vxR + ax*tf)/2,
+         vybar = (2*vyR + ay*tf)/2,
+         vzbar = (2*vzR + az*tf)/2,
+         vbar = sqrt(vxbar^2 + vybar^2 + vzbar^2),
+         adrag = -(ax*vxbar + ay*vybar + (az+32.174)*vzbar)/vbar,
+         Cd = adrag/(K*vbar^2),
+         amagx = ax + adrag*vxbar/vbar,
+         amagy = ay + adrag*vybar/vbar,
+         amagz = az + adrag*vzbar/vbar+32.174,
+         amag = sqrt(amagx^2 + amagy^2 + amagz^2),
+         Mx = 0.5*amagx*tf^2*12,
+         Mz = 0.5*amagz*tf^2*12,
+         Cl = amag/(K*vbar^2),
+         S = 0.4*Cl/(1-2.32*Cl),
+         SpinT = 78.92*S*vbar,
+         SpinTX = SpinT * (vybar*amagz - vzbar*amagy)/(amag*vbar),
+         SpinTY = SpinT * (vzbar*amagx - vxbar*amagz)/(amag*vbar),
+         SpinTZ = SpinT * (vxbar*amagy - vybar*amagx)/(amag*vbar),
+         spin_check = round(sqrt(SpinTX^2 + SpinTY^2 + SpinTZ^2) - SpinT, 1),
+         phi = as.integer(ifelse(amagz > 0, atan2(amagx, amagz)*180/pi, 360 + atan2(amagx, amagz)*180/pi) + 90),
+         spin_eff = SpinT/release_spin_rate,
+         theta = as.integer(ifelse(spin_eff <= 1, acos(spin_eff)*180/pi, ""))) %>% 
+  as.data.frame() %>% 
+  arrange(pitch_name, theta) %>% 
+  group_by(pitch_name) %>% 
+  dplyr::filter(n() > 250) %>% 
+  dplyr::filter(pitch_name == "4-Seam Fastball") %>% 
+  group_by(player_name, game_date, pitch_name) %>% 
+  # dplyr::filter(n() > 50 ) %>% 
+  summarize(`Spin Efficiency` = mean(spin_eff, na.rm = TRUE),
+            `Release Speed` = mean(release_speed, na.rm = TRUE),
+            N = n()) %>% 
+  ggplot(., aes(game_date, `Spin Efficiency`, col = pitch_name)) + geom_path() +
+  facet_wrap(~player_name, ncol = 1) + guides(colour = FALSE) + theme_bw()
+  # group_by(pitch_name) %>% 
+  # dplyr::filter(n() > 1) %>% 
+  # arrange(pitch_name, desc(`Spin Efficiency`))
+
+
