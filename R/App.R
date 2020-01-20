@@ -1,5 +1,65 @@
 
 
+
+#add in code to calculate KDE for where pitches crossed the plate
+
+ksFUN_plate = function(data){
+  
+  H = Hpi(data[,c("plate_x","plate_z")], binned = TRUE) * 1
+  
+  fhata = kde(data[,c("plate_x","plate_z")], H = H, compute.cont = TRUE,
+              xmin = c(minX, minY), xmax = c(maxX, maxY))
+  
+  res95 = data.frame(HR = contourSizes(fhata, cont = 95, approx = TRUE))
+  res50 = data.frame(HR = contourSizes(fhata, cont = 50, approx = TRUE))
+  
+  dimnames(fhata[['estimate']]) = list(fhata[["eval.points"]][[1]],
+                                       fhata[["eval.points"]][[2]])
+  dat = reshape2::melt(fhata[['estimate']])
+  dat$breaks50 = fhata[["cont"]]["50%"]
+  dat$breaks95 = fhata[["cont"]]["5%"]
+  dat$HR95 = round(res95$HR, 2)
+  dat$CA50 = round(res50$HR, 2)
+  
+  return(dat)
+}
+
+
+minX = min(pitch1$plate_x, na.rm = T); maxX = max(pitch1$plate_x, na.rm = T)
+minY = min(pitch1$plate_z, na.rm = T); maxY = max(pitch1$plate_z, na.rm = T)
+
+xx = pitch1 %>%
+  dplyr::filter(pitch_name != "") %>% 
+  group_by(player_name, pitch_name) %>%
+  do(as.data.frame(ksFUN(.)))
+
+
+breaks = xx %>%
+  group_by(player_name, pitch_name) %>%
+  summarize(breaks95 = mean(breaks95),
+            breaks50 = mean(breaks50))
+
+pl <- ggplot(data = xx, aes(x = Var1, y = Var2, fill = pitch_name)) + facet_wrap(~player_name, scales = "free") +
+  geom_point(data = pitch1[pitch1$pitch_name != "",],
+             aes(x = plate_x, y = plate_z, col = pitch_name), size = rel(0.3)) + 
+  # xlab("Horizontal Release Point") + ylab("Vertical Release Point") + 
+  theme(strip.background = element_rect(fill = "lightblue"),
+        strip.text = element_text(face = "bold", size = rel(1.3)))
+groups <- unique(xx$pitch_name)
+player_name <- unique(xx$player_name)
+
+# loop and add for each group
+for(i in groups){
+  for(j in player_name){
+    pl <- pl + stat_contour(data = xx[xx$pitch_name == i & xx$player_name == j,], aes(z = value, col = pitch_name),
+                            breaks = breaks[breaks$pitch_name == i & breaks$player_name == j,]$breaks95, 
+                            alpha = 0.3, geom = "polygon") + theme_bw() + theme(panel.grid = element_blank())
+  }
+}
+pl + facet_wrap(~pitch_name) +
+  geom_path(data = SZ, aes(x = x, y = z), col = 1, size = 1.05, inherit.aes = FALSE) 
+
+
 require(baseballr)
 require(dplyr)
 require(ggplot2)
