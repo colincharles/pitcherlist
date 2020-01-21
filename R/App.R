@@ -1,6 +1,55 @@
 
 
 
+
+
+
+getLevel <- function(x, y, prob = 0.95) {
+  kk = MASS::kde2d(x,y)
+  dx = diff(kk$x[1:2])
+  dy = diff(kk$y[1:2])
+  sz = sort(kk$z)
+  c1 = cumsum(sz) * dx * dy
+  approx(c1, sz, xout = 1 - prob)$y
+}
+L95 = getLevel(clev$plate_x, clev$plate_z)
+
+L95 = clev %>% 
+  group_by(pitch_name) %>% 
+  do(data.frame(breaks = getLevel(.$plate_x, .$plate_z)))
+
+Cont95 = function(x, y){
+  adds = 0.5
+  kk <- kde2d(x, y,
+              lims = c(min(x, na.rm = T) - adds, max(x, na.rm = T) + adds,
+                       min(y, na.rm = T) - adds, max(y, na.rm = T) + adds))
+  dimnames(kk$z) <- list(kk$x,kk$y)
+  dc <- melt(kk$z)
+}
+
+test = clev %>% 
+  group_by(pitch_name) %>% 
+  do(as.data.frame(Cont95(.$plate_x, .$plate_z)))
+
+test = left_join(test, L95)
+
+pl <- ggplot(data = test, aes(x = Var1, y = Var2, fill = pitch_name)) 
+groups <- unique(test$pitch_name)
+
+# loop and add for each group
+for(i in groups){
+  pl <- pl + stat_contour(data = test[test$pitch_name == i,], aes(z = value),
+                          breaks = test[test$pitch_name == i, ]$breaks[1],
+                          geom = "polygon", alpha = 0.4)
+}
+pl + facet_wrap(~pitch_name) + theme_bw() + 
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  geom_point(data = clev, aes(plate_x, plate_z, col = pitch_name))
+
+
+
+
 #add in code to calculate KDE for where pitches crossed the plate
 
 ksFUN_plate = function(data){
