@@ -10,6 +10,22 @@ require(baseballr)
 require(dplyr)
 
 
+#dates = seq.Date(as.Date("2018-03-25"), as.Date("2019-10-30"), by = "1 week")
+#dates = dates[1:3]
+#data = lapply(seq_along(dates), FUN = function(i) scrape_statcast_savant_pitcher_all(start_date = dates[i],
+ #                                                                                    end_date = dates[i] + 6))
+
+#df = dplyr::bind_rows(data)
+#df %>% 
+#  head() %>% 
+#  as.data.frame()
+
+#df %>% 
+#  tail() %>% 
+#  as.data.frame()
+
+
+
 # create a start and end date to download the Statcast data from Baseball Savant
 start_date = as.Date("2019-03-20")
 end_date = Sys.Date()
